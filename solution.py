@@ -1,5 +1,5 @@
 import numpy as np
-from collections import deque, defaultdict
+from collections import defaultdict
 from itertools import count
 
 class BaseMap(object):
@@ -18,7 +18,7 @@ class BaseMap(object):
 
 class Map1(BaseMap):
     """
-    map without any obstacles (1 and 2 in tests)
+    map order_with_biggest_costout any obstacles (1 and 2 in tests)
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -75,9 +75,6 @@ class Map2(BaseMap):
         block_b = self._get_block_num(y2, x2)
         yc1, xc1 = self._get_block_center(*block_a)
         yc2, xc2 = self._get_block_center(*block_b)
-
-        # print('block a', yc1, xc1)
-        # print('block b', yc2, xc2)
 
         path_str = ''
 
@@ -144,27 +141,16 @@ class Order:
         self.id = next(self._ids)
 
     def cost_after_finish(self, cur_iteration, path_pre, robot):
-        # def _cost_after_finish():
         cur_position = robot.cur_position
         total_dist = robot.map.dist(cur_position, self.a) + robot.map.dist(self.a, self.b) + 1
         cost = self.max_tips - ((cur_iteration - self.iteration_when_added)*60)  - total_dist - path_pre
         return cost
-        # return cost
-        # return (cur_iteration + self.iteration_when_added)*60 +path_pre
-        # return _cost_after_finish
 
     def get_ab(self):
         return self.a, self.b
 
     def __repr__(self):
         return f'Order_{self.a}_to_{self.b}'
-
-    # def __eq__(self,other):
-    #     return (self.a == other.a) and (self.b == other.b)
-
-    # def priority(self, other): # возращает False если для данного заказа в его точке есть другой заказ с большим приоритетом
-    #     return self.id > other.id
-
 
 class Env(object):
     def __init__(self, max_tips, cost, _map, start_position, num_robot=1):
@@ -250,15 +236,17 @@ class Env(object):
         self.print(path)
 
     def print(self, act):
-        # print(act)
-        pass
-        # with open('tmp.txt', 'a') as file:
-            # print(act, file=file)
+        global debug 
+        if debug:
+            with open('tmp.txt', 'a') as file:
+                print(act, file=file)
+        else:
+            print(act)
+
 
 
 if __name__ == '__main__':
     import sys   
-    from tqdm import tqdm
     debug = False
     if len(sys.argv) > 1:
         debug = True
@@ -291,8 +279,7 @@ if __name__ == '__main__':
 
 
     T, D = list(map(int, input().split()))
-    for iteration in tqdm(range(T)):
-    # for iteration in range(T):
+    for iteration in range(T):
 
         num_orders = int(input())
         for i in range(num_orders):
