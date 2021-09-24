@@ -2,6 +2,7 @@ import numpy as np
 from collections import defaultdict
 from itertools import count
 
+
 class BaseMap(object):
     def __init__(self, N):
         self.N = N
@@ -12,17 +13,18 @@ class BaseMap(object):
 
     def dist(self, a, b):
         raise NotImplementedError()
-    
+
     def __call__(self, a, b):
         return self.str_a_to_b(a, b)
+
 
 class Map1(BaseMap):
     """
     map order_with_biggest_costout any obstacles (1 and 2 in tests)
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
     def str_a_to_b(self, a, b):
         y1, x1 = a
@@ -37,17 +39,18 @@ class Map1(BaseMap):
     def dist(self, a, b):
         return len(self.str_a_to_b(a, b))
 
+
 class Map2(BaseMap):
     """
     map for 3, 4, 5, in tests/
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
-
     # @staticmethod
-    def  _get_block_center(self, k, m):
+
+    def _get_block_center(self, k, m):
         if self.N == 180:
             return 7+12*k, 7+12*m
         if self.N == 384:
@@ -55,9 +58,10 @@ class Map2(BaseMap):
         if self.N == 1024:
             return 17 + 32*k, 17 + 32*m
     # @staticmethod
+
     def _get_block_num(self, y, x):
         if self.N == 180:
-            return (y - 4) // 12, (x -4) // 12
+            return (y - 4) // 12, (x - 4) // 12
         if self.N == 384:
             return (y - 7) // 24, (x - 7) // 24
         if self.N == 1024:
@@ -95,22 +99,23 @@ class Map2(BaseMap):
 
         return path_str
 
-
     def dist(self, a, b):
         return len(self.str_a_to_b(a, b))
 
 
 class MapInnopolis(BaseMap):
     """docstring for MapInnopolis"""
+
     def __init__(self, *args):
         super().__init__(*args)
-        
+
     def str_a_to_b(self, a, b):
         pass
 
     def dist(self, a, b):
         y1, x1 = a
         y2, x2 = b
+
 
 class Robot:
     def __init__(self, start_position, _map):
@@ -131,8 +136,10 @@ class Robot:
     def wait(self, sec):
         return 'S'*sec
 
+
 class Order:
     _ids = count(0)
+
     def __init__(self, a, b, max_tips, iteration):
         self.a = a
         self.b = b
@@ -142,8 +149,10 @@ class Order:
 
     def cost_after_finish(self, cur_iteration, path_pre, robot):
         cur_position = robot.cur_position
-        total_dist = robot.map.dist(cur_position, self.a) + robot.map.dist(self.a, self.b) + 1
-        cost = self.max_tips - ((cur_iteration - self.iteration_when_added)*60)  - total_dist - path_pre
+        total_dist = robot.map.dist(
+            cur_position, self.a) + robot.map.dist(self.a, self.b) + 1
+        cost = self.max_tips - \
+            ((cur_iteration - self.iteration_when_added)*60) - total_dist - path_pre
         return cost
 
     def get_ab(self):
@@ -152,12 +161,14 @@ class Order:
     def __repr__(self):
         return f'Order_{self.a}_to_{self.b}'
 
+
 class Env(object):
     def __init__(self, max_tips, cost, _map, start_position, num_robot=1):
         self.max_tips = max_tips
         self.cost = cost
 
-        self.robot = Robot(start_position, _map)#[ for i in range(num_robot)]
+        # [ for i in range(num_robot)]
+        self.robot = Robot(start_position, _map)
         self.orders = []
         self.second_sort_orders = []
         # self.orders = deque()
@@ -170,16 +181,17 @@ class Env(object):
         order = Order(a, b, self.max_tips, itr)
 
         if a in self.all_a:
-             self.hash_for_orders[a].append(order)
+            self.hash_for_orders[a].append(order)
         else:
             self.all_a.add(a)
             self.orders.append(order)
 
-
     def get_order(self, itr, path_pre):
         # рассматриваем только ненулевые заказы
-        non_zero = list(filter(lambda x: x.cost_after_finish(itr, path_pre, self.robot) > 0, self.orders))
-        self.orders = sorted(non_zero, key=lambda x: x.cost_after_finish(itr, path_pre, self.robot))
+        non_zero = list(filter(lambda x: x.cost_after_finish(
+            itr, path_pre, self.robot) > 0, self.orders))
+        self.orders = sorted(
+            non_zero, key=lambda x: x.cost_after_finish(itr, path_pre, self.robot))
         if len(self.orders) > 0:
             order_with_biggest_cost = self.orders.pop()
             # print(order_with_biggest_cost)
@@ -193,16 +205,16 @@ class Env(object):
     def iteration(self, itr):
         path = ""
         while True:
-            if not self.robot.is_free: # если робот еще делает заказ
+            if not self.robot.is_free:  # если робот еще делает заказ
                 # assert len(path) == 0
                 left_time = 60
                 path += self.robot.prev_work[:left_time]
                 self.robot.prev_work = self.robot.prev_work[left_time:]
-                if len(self.robot.prev_work) > 0: # нужно больше, чем одну итерацию
+                if len(self.robot.prev_work) > 0:  # нужно больше, чем одну итерацию
                     # self.robot.prev_work = path[60:]
                     # path = path[:60]
                     break
-                else: # ecли закончил заказ
+                else:  # ecли закончил заказ
                     self.robot.is_free = True
                     # assert self.robot.prev_work == ''
                     # self.robot.prev_work = ''
@@ -212,8 +224,10 @@ class Env(object):
                 # self.sort(itr, len(path))
                 order = self.get_order(itr, len(path))
                 if order is not None:
-                    self.reward += order.cost_after_finish(itr, len(path), self.robot)
-                    full_path_for_order, full_time_for_order = self.robot.do_order(order)
+                    self.reward += order.cost_after_finish(
+                        itr, len(path), self.robot)
+                    full_path_for_order, full_time_for_order = self.robot.do_order(
+                        order)
                     # print(full_time_for_order, full_time_for_order, path)
                     # left_time = 60 - len(path)
                     if full_time_for_order > left_time:
@@ -224,7 +238,7 @@ class Env(object):
                         break
                     else:
                         path += full_path_for_order
-                    
+
                 else:
                     break
             else:
@@ -236,7 +250,7 @@ class Env(object):
         self.print(path)
 
     def print(self, act):
-        global debug 
+        global debug
         if debug:
             with open('tmp.txt', 'a') as file:
                 print(act, file=file)
@@ -244,16 +258,15 @@ class Env(object):
             print(act)
 
 
-
 if __name__ == '__main__':
-    import sys   
+    import sys
     debug = False
     if len(sys.argv) > 1:
         debug = True
 
+    N_to_MAP = {4: Map1, 128: Map1, 180: Map2,
+                384: Map2, 1024: Map2, 1000: MapInnopolis}
 
-    N_to_MAP = {4: Map1, 128: Map1, 180: Map2, 384: Map2, 1024: Map2, 1000: MapInnopolis}
-    
     N, max_tips, cost = list(map(int, input().split()))
     for _ in range(N):
         input()
@@ -264,19 +277,17 @@ if __name__ == '__main__':
         start_position = (4, 4)
         print(*start_position)
     elif N == 180:
-        start_position = (7, 7) # center of 1st block
+        start_position = (7, 7)  # center of 1st block
         print(*start_position)
     elif N == 384:
-        start_position = (13, 13) # center of 1st block
+        start_position = (13, 13)  # center of 1st block
         print(*start_position)
     elif N == 1024:
-        start_position = (17, 17) # center of 1st block
+        start_position = (17, 17)  # center of 1st block
         print(*start_position)
     else:
         raise NotImplementedError()
     env = Env(max_tips, cost, _map, start_position)
-
-
 
     T, D = list(map(int, input().split()))
     for iteration in range(T):
@@ -289,14 +300,3 @@ if __name__ == '__main__':
 
     if debug:
         print('Total reward:', env.reward - cost)
-
-
-
-
-
-
-
-
-
-
-
